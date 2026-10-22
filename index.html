@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Downloader - GitHub Pages</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 50px; background: #1a1a1a; color: white; }
+        h1 { color: #ff0050; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+        input { padding: 12px; width: 70%; border-radius: 8px; border: none; outline: none; font-size: 16px; }
+        button { padding: 12px 25px; background: #ff0050; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #e60048; }
+        #result { margin-top: 30px; background: #2a2a2a; padding: 20px; border-radius: 10px; display: none; }
+        video { width: 100%; max-width: 300px; border-radius: 10px; margin-top: 10px; }
+        a { display: block; margin-top: 15px; padding: 10px; background: #00c851; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        a.audio { background: #33b5e5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 TikTok Downloader</h1>
+        <p>Download video TikTok tanpa watermark (HD).</p>
+        
+        <input type="text" id="urlInput" placeholder="Paste link TikTok disini...">
+        <button onclick="downloadVideo()">Download</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function downloadVideo() {
+            const url = document.getElementById('urlInput').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!url) return alert('Masukin link TikTok dulu, Bang!');
+            if (!url.includes('tiktok.com')) return alert('Pastikan link dari TikTok!');
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Sedang memproses...';
+
+            try {
+                // Pake Proxy CORS (allorigins) biar gak kena blokir browser
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const targetUrl = encodeURIComponent('https://tikwm.com/api/');
+                
+                const params = new URLSearchParams();
+                params.append('url', url);
+                params.append('hd', '1');
+
+                // Tembak ke API lewat Proxy
+                const response = await fetch(proxyUrl + targetUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+
+                const data = await response.json();
+
+                if (!data.data || !data.data.play) {
+                    resultDiv.innerHTML = '❌ Video tidak ditemukan atau API sedang down.';
+                    return;
+                }
+
+                const videoData = data.data;
+
+                resultDiv.innerHTML = `
+                    <h3>${videoData.title || 'TikTok Video'}</h3>
+                    <img src="${videoData.cover}" width="150" style="border-radius: 10px;">
+                    <br>
+                    <video controls src="${videoData.play}"></video>
+                    <a href="${videoData.play}" target="_blank">⬇️ Download Video HD</a>
+                    <a href="${videoData.music}" target="_blank" class="audio">🎵 Download Audio</a>
+                `;
+
+            } catch (err) {
+                console.error(err);
+                resultDiv.innerHTML = '❌ Gagal memproses link. Coba lagi nanti.';
+            }
+        }
+    </script>
+</body>
+</html>
